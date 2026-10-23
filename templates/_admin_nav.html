@@ -1,0 +1,9 @@
+{% set links = [('admin.dashboard','Overview'),('admin.users','Users'),('admin.doctors','Doctors'),('admin.medicines','Medicines'),('admin.patients','Patients'),('admin.reports','Reports'),('admin.audit','Audit log')] %}
+<ul class="nav nav-pills mb-4 flex-wrap gap-1">
+    {% for ep, label in links %}
+    <li class="nav-item">
+        <a class="nav-link py-1 {{ 'active' if request.endpoint == ep or (ep == 'admin.patients' and request.endpoint == 'admin.patient_edit') else '' }}"
+           href="{{ url_for(ep) }}">{{ label }}</a>
+    </li>
+    {% endfor %}
+</ul>

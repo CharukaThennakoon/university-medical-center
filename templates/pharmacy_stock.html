@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Medicine Stock - University Medical Center{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('pharmacy.dashboard') }}" class="small">&larr; Back to queue</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2 mb-3">
+    <h4 class="mb-0">Medicine stock</h4>
+    <div class="btn-group btn-group-sm">
+        <a class="btn btn-outline-secondary {{ 'active' if show != 'out' else '' }}" href="{{ url_for('pharmacy.stock') }}">All</a>
+        <a class="btn btn-outline-danger {{ 'active' if show == 'out' else '' }}" href="{{ url_for('pharmacy.stock', show='out') }}">Out of stock only</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-2"><div class="fs-4 fw-semibold">{{ summary.total }}</div><div class="small text-muted">Medicines</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-2"><div class="fs-4 fw-semibold text-success">{{ summary.in_stock }}</div><div class="small text-muted">In stock</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-2"><div class="fs-4 fw-semibold text-danger">{{ summary.out_of_stock }}</div><div class="small text-muted">Out of stock</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-2"><div class="fs-4 fw-semibold">{{ summary.expired }}</div><div class="small text-muted">Expired</div></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th style="width:40px"></th><th>Medicine</th><th>Category</th><th class="text-end">Stock</th><th>Expiry</th></tr></thead>
+            <tbody>
+            {% for m in medicines %}
+                <tr>
+                    <td><span class="d-inline-block rounded-circle bg-{{ 'success' if m.stock_indicator == 'GREEN' else 'danger' }}"
+                              style="width:12px;height:12px;" title="{{ m.stock_indicator }}"></span></td>
+                    <td class="fw-semibold">{{ m.medicine_name }}</td>
+                    <td class="text-muted">{{ m.category }}</td>
+                    <td class="text-end {{ 'text-success' if m.stock_quantity > 0 else 'text-danger fw-bold' }}">
+                        {{ m.stock_quantity if m.stock_quantity > 0 else 'Out of stock' }}
+                    </td>
+                    <td>
+                        {% if m.expiry_date %}{{ m.expiry_date.strftime('%d %b %Y') }}{% else %}-{% endif %}
+                        {% if m.expired %}<span class="badge bg-danger ms-1">Expired</span>{% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Nothing to show.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

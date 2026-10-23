@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Issue Token - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <a href="{{ url_for('counter.dashboard') }}" class="small">&larr; Back to dashboard</a>
+        <h4 class="mt-2">Issue a token</h4>
+        <p class="text-muted small">Enter the AR number from the student's Campus ID.</p>
+
+        <form method="get" action="{{ url_for('counter.token') }}" class="row g-2 mb-4">
+            <div class="col">
+                <input type="text" name="ar" value="{{ ar }}" class="form-control"
+                       placeholder="AR number, e.g. AR1001" required autofocus>
+            </div>
+            <div class="col-auto"><button class="btn btn-primary">Find student</button></div>
+        </form>
+
+        {% if ar and not patient %}
+        <div class="alert alert-warning">
+            No patient found with AR number <strong>{{ ar }}</strong>.
+            <a href="{{ url_for('counter.register', ar=ar) }}">Register this student</a>
+        </div>
+        {% endif %}
+
+        {% if patient %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">{{ patient.first_name }} {{ patient.last_name }}</h5>
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4">AR number</dt><dd class="col-sm-8">{{ patient.ar_number }}</dd>
+                    <dt class="col-sm-4">NIC</dt><dd class="col-sm-8">{{ patient.nic_number }}</dd>
+                    <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ patient.address }}</dd>
+                    <dt class="col-sm-4">Height / Weight</dt>
+                    <dd class="col-sm-8">
+                        {{ patient.height if patient.height is not none else '-' }} cm /
+                        {{ patient.weight if patient.weight is not none else '-' }} kg
+                    </dd>
+                    <dt class="col-sm-4">Medical conditions</dt>
+                    <dd class="col-sm-8">
+                        {% if patient.special_conditions %}
+                            <span class="text-danger fw-semibold">{{ patient.special_conditions }}</span>
+                        {% else %}None recorded{% endif %}
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer bg-white">
+                {% if open_token %}
+                    <div class="alert alert-info mb-0">
+                        Already has token <strong>#{{ open_token.token_number }}</strong> today
+                        {{ status_badge(open_token.status) }}. A new one cannot be issued until it is completed.
+                    </div>
+                {% else %}
+                    <form method="post" action="{{ url_for('counter.token') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
+                        <input type="hidden" name="ar" value="{{ patient.ar_number }}">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="id_verified" name="id_verified" required>
+                            <label class="form-check-label" for="id_verified">
+                                I checked the Campus ID and AR number against these details.
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-success">Issue today's token</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

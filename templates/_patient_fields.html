@@ -1,0 +1,54 @@
+{# Shared by register_student.html and counter_register.html.
+   Expects: form (dict), errors (dict), password_required (bool), password_help (str) #}
+{% macro field(name, label, required=True, type='text', placeholder='', help='', step='') %}
+<div class="mb-3">
+    <label for="{{ name }}" class="form-label">
+        {{ label }}{% if required %} <span class="text-danger">*</span>{% endif %}
+    </label>
+    <input type="{{ type }}" id="{{ name }}" name="{{ name }}"
+           class="form-control{% if errors.get(name) %} is-invalid{% endif %}"
+           {% if type != 'password' %}value="{{ form.get(name) if form.get(name) is not none else '' }}"{% endif %}
+           placeholder="{{ placeholder }}"
+           {% if step %}step="{{ step }}"{% endif %}
+           {% if required %}required{% endif %}>
+    {% if errors.get(name) %}<div class="invalid-feedback">{{ errors.get(name) }}</div>{% endif %}
+    {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+<div class="row">
+    <div class="col-md-6">{{ field('first_name', 'First name') }}</div>
+    <div class="col-md-6">{{ field('last_name', 'Last name') }}</div>
+</div>
+<div class="row">
+    <div class="col-md-6">{{ field('ar_number', 'AR number', placeholder='e.g. AR1001') }}</div>
+    <div class="col-md-6">{{ field('nic_number', 'NIC number', placeholder='123456789V or 200012345678') }}</div>
+</div>
+
+<div class="mb-3">
+    <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+    <textarea id="address" name="address" rows="2" required
+              class="form-control{% if errors.get('address') %} is-invalid{% endif %}">{{ form.get('address') or '' }}</textarea>
+    {% if errors.get('address') %}<div class="invalid-feedback">{{ errors.get('address') }}</div>{% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-6">{{ field('height', 'Height (cm)', required=False, type='number', step='0.1', placeholder='e.g. 170') }}</div>
+    <div class="col-md-6">{{ field('weight', 'Weight (kg)', required=False, type='number', step='0.1', placeholder='e.g. 60') }}</div>
+</div>
+
+<div class="mb-3">
+    <label for="special_conditions" class="form-label">Special medical conditions</label>
+    <textarea id="special_conditions" name="special_conditions" rows="2"
+              placeholder="Allergies, asthma, diabetes ... (leave blank if none)"
+              class="form-control{% if errors.get('special_conditions') %} is-invalid{% endif %}">{{ form.get('special_conditions') or '' }}</textarea>
+    {% if errors.get('special_conditions') %}<div class="invalid-feedback">{{ errors.get('special_conditions') }}</div>{% endif %}
+</div>
+
+<hr>
+<h6>{{ 'Create your login' if password_required else 'Online login (optional)' }}</h6>
+<p class="small text-muted">{{ password_help }}</p>
+<div class="row">
+    <div class="col-md-6">{{ field('password', 'Password', required=password_required, type='password', help='At least 8 characters.') }}</div>
+    <div class="col-md-6">{{ field('confirm_password', 'Confirm password', required=password_required, type='password') }}</div>
+</div>

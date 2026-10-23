@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}My Medical History - University Medical Center{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('patients.dashboard') }}" class="small">&larr; Back to dashboard</a>
+<h3 class="mt-2 mb-1">My Medical History</h3>
+<p class="text-muted">{{ patient.first_name }} {{ patient.last_name }} &middot; AR number {{ patient.ar_number }}</p>
+
+{% if patient.special_conditions %}
+<div class="alert alert-warning py-2 small"><strong>Special conditions on record:</strong> {{ patient.special_conditions }}</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Date</th><th>Time</th><th>Illness / Diagnosis</th><th>Prescribed medicines</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            {% for r in records %}
+                <tr>
+                    <td class="text-nowrap">{{ r.prescribed_at.strftime('%d %b %Y') }}</td>
+                    <td class="text-nowrap">{{ r.prescribed_at.strftime('%H:%M') }}</td>
+                    <td>{{ r.diagnosis }}</td>
+                    <td>
+                        {% if r.medicines %}
+                        <ul class="mb-0 ps-3 small">
+                            {% for m in r.medicines %}
+                            <li><strong>{{ m.medicine_name }}</strong> &ndash; {{ m.dosage }} (&times;{{ m.quantity_given }})</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}<span class="text-muted small">No medicines prescribed</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if not r.medicines %}<span class="text-muted small">-</span>
+                        {% elif r.status == 'Pending' %}<span class="badge bg-warning text-dark">At the pharmacy</span>
+                        {% else %}<span class="badge bg-success">Dispensed</span>{% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">You have no recorded visits yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

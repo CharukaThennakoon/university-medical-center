@@ -1,0 +1,26 @@
+{# Expects: history (list from modules/patients/history.py) #}
+{% if history %}
+    {% for rx in history %}
+    <div class="border rounded p-3 mb-2 bg-white">
+        <div class="d-flex justify-content-between flex-wrap gap-1">
+            <strong>{{ rx.prescribed_at.strftime('%d %b %Y, %H:%M') }}</strong>
+            <span class="small text-muted">{{ rx.doctor_name }} &middot; Token #{{ rx.token_number }}</span>
+        </div>
+        <div class="mt-1"><span class="text-muted small">Diagnosis:</span> {{ rx.diagnosis }}</div>
+        {% if rx.medicines %}
+        <ul class="small mb-1 mt-1">
+            {% for m in rx.medicines %}
+            <li>{{ m.medicine_name }} &ndash; {{ m.dosage }} (&times;{{ m.quantity_given }})</li>
+            {% endfor %}
+        </ul>
+        <span class="badge bg-{{ 'warning text-dark' if rx.status == 'Pending' else 'success' }}">
+            {{ 'At pharmacy' if rx.status == 'Pending' else 'Dispensed' }}
+        </span>
+        {% else %}
+        <div class="small text-muted">No medicines prescribed.</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted mb-0">No previous visits recorded.</p>
+{% endif %}

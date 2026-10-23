@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Consultation #{{ token.token_number }} - University Medical Center{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('doctor.dashboard') }}" class="small">&larr; Back to queue</a>
+<div class="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
+    <h4 class="mb-0">Token #{{ token.token_number }}</h4>
+    {{ status_badge(token.status) }}
+    <span class="text-muted small">{{ token.token_date.strftime('%d %b %Y') }}</span>
+</div>
+
+<div class="row g-3">
+    <!-- LEFT: patient + history -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ token.first_name }} {{ token.last_name }}</h5>
+                <dl class="row small mb-2">
+                    <dt class="col-5">AR number</dt><dd class="col-7">{{ token.ar_number }}</dd>
+                    <dt class="col-5">NIC</dt><dd class="col-7">{{ token.nic_number }}</dd>
+                    <dt class="col-5">Height</dt><dd class="col-7">{{ token.height if token.height is not none else '-' }} cm</dd>
+                    <dt class="col-5">Weight</dt><dd class="col-7">{{ token.weight if token.weight is not none else '-' }} kg</dd>
+                    <dt class="col-5">Address</dt><dd class="col-7">{{ token.address }}</dd>
+                </dl>
+                {% if token.special_conditions %}
+                <div class="alert alert-danger py-2 mb-2 small">
+                    <strong>Special conditions:</strong> {{ token.special_conditions }}
+                </div>
+                {% endif %}
+                <a class="small" href="{{ url_for('doctor.patient_history', patient_id=token.patient_id) }}">Full history &rarr;</a>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Recent visits</div>
+            <div class="card-body">{% include "_history.html" %}</div>
+        </div>
+    </div>
+
+    <!-- RIGHT: action area -->
+    <div class="col-lg-8">
+        {% if errors %}
+        <div class="alert alert-danger">
+            <strong>The prescription was NOT saved. No stock was deducted.</strong>
+            <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        {% if not token.is_today and token.status != 'Completed' %}
+            <div class="alert alert-secondary">
+                This token is from {{ token.token_date.strftime('%d %b %Y') }} and can no longer be actioned.
+            </div>
+
+        {% elif token.status == 'Pending' %}
+            <div class="card shadow-sm"><div class="card-body text-center py-5">
+                <p class="mb-3">This patient is waiting. Call them in to begin the consultation.</p>
+                <form method="post" action="{{ url_for('doctor.start', token_id=token.token_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-primary btn-lg">Start consultation</button>
+                </form>
+            </div></div>
+
+        {% elif can_prescribe %}
+            <form method="post" id="rxForm" action="{{ url_for('doctor.prescribe', token_id=token.token_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-white fw-semibold">Diagnosis</div>
+                    <div class="card-body">
+                        <textarea name="diagnosis" class="form-control" rows="3" maxlength="2000" required
+                                  placeholder="Illness / diagnosis">{{ diagnosis }}</textarea>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white fw-semibold d-flex justify-content-between">
+                                <span>Medicine inventory</span>
+                                <span class="small fw-normal">
+                                    <span class="badge bg-success">&nbsp;</span> in stock
+                                    <span class="badge bg-danger ms-1">&nbsp;</span> out of stock
+                                </span>
+                            </div>
+                            <div class="card-body pb-2">
+                                <input type="text" id="medFilter" class="form-control form-control-sm mb-2"
+                                       placeholder="Search medicine or category...">
+                                <div class="list-group" style="max-height: 380px; overflow-y: auto;">
+                                    {% for m in medicines %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center med-row"
+                                         data-id="{{ m.medicine_id }}" data-name="{{ m.medicine_name }}"
+                                         data-stock="{{ m.stock_quantity }}"
+                                         data-search="{{ (m.medicine_name ~ ' ' ~ m.category)|lower }}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-block rounded-circle bg-{{ 'success' if m.stock_indicator == 'GREEN' else 'danger' }}"
+                                                  style="width:12px;height:12px;flex:none;"
+                                                  title="{{ m.stock_indicator }}"></span>
+                                            <div>
+                                                <div class="fw-semibold small">{{ m.medicine_name }}</div>
+                                                <div class="text-muted" style="font-size:.75rem;">
+                                                    {{ m.category }} &middot;
+                                                    {% if m.stock_quantity > 0 %}<span class="text-success">{{ m.stock_quantity }} in stock</span>
+                                                    {% else %}<span class="text-danger fw-semibold">Out of stock</span>{% endif %}
+                                                    {% if m.expired %}&middot; <span class="badge bg-warning text-dark">Expired</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary add-med"
+                                                {% if not m.selectable %}disabled{% endif %}>Add</button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white fw-semibold">Prescription</div>
+                            <div class="card-body">
+                                <div id="rxEmpty" class="text-muted small">
+                                    No medicines added. Use <strong>Add</strong> on the left. You can also save the
+                                    consultation with a diagnosis only.
+                                </div>
+                                <div id="rxLines"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-end">
+                    <button type="submit" class="btn btn-success btn-lg">Save &amp; send to pharmacy</button>
+                </div>
+            </form>
+
+        {% else %}
+            {# Completed consultation: read-only summary #}
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-semibold">Prescription</div>
+                <div class="card-body">
+                    {% if prescription %}
+                        {% set history = [prescription] %}
+                        {% include "_history.html" %}
+                    {% else %}
+                        <p class="text-muted mb-0">No prescription was recorded for this token.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if can_prescribe %}
+<script>
+(function () {
+    var lines = document.getElementById('rxLines');
+    var empty = document.getElementById('rxEmpty');
+    var rows = document.querySelectorAll('.med-row');
+    var preset = {{ preset|tojson }};
+
+    function refreshEmpty() { empty.style.display = lines.children.length ? 'none' : 'block'; }
+
+    function rowFor(id) {
+        for (var i = 0; i < rows.length; i++) { if (rows[i].dataset.id === String(id)) return rows[i]; }
+        return null;
+    }
+
+    function addLine(id, dosage, qty) {
+        id = String(id);
+        var row = rowFor(id);
+        if (!row || lines.querySelector('[data-med="' + id + '"]')) return;
+        var stock = parseInt(row.dataset.stock, 10);
+
+        var div = document.createElement('div');
+        div.className = 'border rounded p-2 mb-2';
+        div.dataset.med = id;
+        div.innerHTML =
+            '<div class="d-flex justify-content-between align-items-start mb-2">' +
+            '<strong class="small rx-name"></strong>' +
+            '<button type="button" class="btn-close" aria-label="Remove"></button></div>' +
+            '<input type="hidden" name="medicine_id">' +
+            '<div class="row g-2">' +
+            '<div class="col-8"><input type="text" name="dosage" class="form-control form-control-sm" ' +
+            'maxlength="100" required placeholder="e.g. 1 tablet, 3 times daily for 5 days"></div>' +
+            '<div class="col-4"><input type="number" name="quantity" class="form-control form-control-sm" ' +
+            'min="1" max="' + stock + '" required placeholder="Qty"></div></div>' +
+            '<div class="form-text rx-stock"></div>';
+        div.querySelector('.rx-name').textContent = row.dataset.name;
+        div.querySelector('[name=medicine_id]').value = id;
+        div.querySelector('.rx-stock').textContent = 'In stock: ' + stock;
+        if (dosage) div.querySelector('[name=dosage]').value = dosage;
+        if (qty) div.querySelector('[name=quantity]').value = qty;
+
+        div.querySelector('.btn-close').addEventListener('click', function () {
+            div.remove();
+            row.querySelector('.add-med').disabled = false;
+            refreshEmpty();
+        });
+        lines.appendChild(div);
+        row.querySelector('.add-med').disabled = true;
+        refreshEmpty();
+    }
+
+    rows.forEach(function (row) {
+        row.querySelector('.add-med').addEventListener('click', function () {
+            addLine(row.dataset.id, '', '');
+        });
+    });
+
+    document.getElementById('medFilter').addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        rows.forEach(function (row) {
+            row.style.display = (!q || row.dataset.search.indexOf(q) !== -1) ? '' : 'none';
+        });
+    });
+
+    document.getElementById('rxForm').addEventListener('submit', function (e) {
+        var n = lines.children.length;
+        var msg = n ? 'Save this prescription and deduct stock for ' + n + ' medicine(s)?'
+                    : 'Save the consultation without any medicines?';
+        if (!confirm(msg)) e.preventDefault();
+    });
+
+    preset.forEach(function (p) { addLine(p.medicine_id, p.dosage, p.quantity); });
+    refreshEmpty();
+})();
+</script>
+{% endif %}
+{% endblock %}

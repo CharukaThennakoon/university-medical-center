@@ -1,0 +1,256 @@
+/* Floating AI assistant widget - University Medical Center */
+.umc-chat {
+    --umc-primary: #0d6efd;
+    --umc-primary-dark: #0a58ca;
+    --umc-bg: #ffffff;
+    --umc-soft: #f1f4f9;
+    --umc-border: #dfe4ec;
+    --umc-text: #1f2937;
+    --umc-muted: #6b7280;
+    --umc-alert-bg: #fff4f4;
+    --umc-alert-border: #f5b5b5;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1040;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--umc-text);
+}
+
+/* ---- floating button -------------------------------------------------- */
+.umc-chat__fab {
+    width: 58px;
+    height: 58px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--umc-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.45);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+.umc-chat__fab:hover { background: var(--umc-primary-dark); transform: scale(1.06); }
+.umc-chat__fab:focus-visible,
+.umc-chat__iconbtn:focus-visible,
+.umc-chat__send:focus-visible,
+.umc-chat__chip:focus-visible { outline: 3px solid #ffc107; outline-offset: 2px; }
+.umc-chat__icon-close { display: none; }
+.umc-chat--open .umc-chat__icon-open { display: none; }
+.umc-chat--open .umc-chat__icon-close { display: block; }
+
+/* ---- panel ------------------------------------------------------------- */
+.umc-chat__panel {
+    position: absolute;
+    right: 0;
+    bottom: 72px;
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    height: min(580px, calc(100vh - 110px));
+    display: flex;
+    flex-direction: column;
+    background: var(--umc-bg);
+    border: 1px solid var(--umc-border);
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    animation: umc-pop 0.18s ease-out;
+}
+.umc-chat__panel[hidden] { display: none; }
+@keyframes umc-pop {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+.umc-chat__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 12px 12px 14px;
+    background: var(--umc-primary);
+    color: #fff;
+}
+.umc-chat__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex: none;
+}
+.umc-chat__title { flex: 1; min-width: 0; line-height: 1.2; }
+.umc-chat__title strong { display: block; font-size: 15px; }
+.umc-chat__title span { font-size: 12px; opacity: 0.85; }
+.umc-chat__iconbtn {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.umc-chat__iconbtn:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* ---- messages ---------------------------------------------------------- */
+.umc-chat__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    background: var(--umc-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+}
+.umc-chat__bubble {
+    max-width: 86%;
+    padding: 9px 12px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+.umc-chat__bubble p { margin: 0 0 6px; }
+.umc-chat__bubble p:last-child,
+.umc-chat__bubble ul:last-child { margin-bottom: 0; }
+.umc-chat__bubble ul { margin: 0 0 6px; padding-left: 18px; }
+.umc-chat__bubble li { margin-bottom: 2px; }
+.umc-chat__bubble--user {
+    align-self: flex-end;
+    background: var(--umc-primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.umc-chat__bubble--assistant {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid var(--umc-border);
+    border-bottom-left-radius: 4px;
+}
+.umc-chat__bubble--error {
+    align-self: flex-start;
+    background: #fff8e6;
+    border: 1px solid #ffe08a;
+    color: #7a5b00;
+}
+.umc-chat__bubble--alert {
+    align-self: flex-start;
+    background: var(--umc-alert-bg);
+    border: 1px solid var(--umc-alert-border);
+    color: #7a1212;
+}
+
+/* typing indicator */
+.umc-chat__typing { display: inline-flex; gap: 4px; padding: 3px 0; }
+.umc-chat__typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #9aa5b8;
+    animation: umc-bounce 1.2s infinite ease-in-out;
+}
+.umc-chat__typing span:nth-child(2) { animation-delay: 0.15s; }
+.umc-chat__typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes umc-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---- suggestion chips -------------------------------------------------- */
+.umc-chat__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px 0;
+    background: var(--umc-soft);
+}
+.umc-chat__chips[hidden] { display: none; }
+.umc-chat__chip {
+    border: 1px solid var(--umc-primary);
+    background: #fff;
+    color: var(--umc-primary);
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+.umc-chat__chip:hover { background: #e7f0ff; }
+
+/* ---- input ------------------------------------------------------------- */
+.umc-chat__form {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 4px;
+    background: var(--umc-soft);
+}
+.umc-chat__form textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--umc-border);
+    border-radius: 12px;
+    padding: 9px 12px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.35;
+    max-height: 110px;
+    background: #fff;
+    color: var(--umc-text);
+}
+.umc-chat__form textarea:focus { outline: 2px solid var(--umc-primary); outline-offset: 0; border-color: transparent; }
+.umc-chat__send {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border: 0;
+    border-radius: 50%;
+    background: var(--umc-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.umc-chat__send:hover:not(:disabled) { background: var(--umc-primary-dark); }
+.umc-chat__send:disabled { background: #b8c3d6; cursor: not-allowed; }
+.umc-chat__counter { padding: 0 16px; font-size: 11px; color: var(--umc-muted); text-align: right; min-height: 14px; background: var(--umc-soft); }
+.umc-chat__counter--warn { color: #b45309; font-weight: 600; }
+
+.umc-chat__note {
+    padding: 7px 14px 9px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--umc-muted);
+    background: var(--umc-soft);
+    border-top: 1px solid var(--umc-border);
+}
+
+/* ---- small screens: bottom sheet ---------------------------------------- */
+@media (max-width: 575.98px) {
+    .umc-chat { right: 12px; bottom: 12px; }
+    .umc-chat__panel {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        bottom: 80px;
+        width: auto;
+        max-width: none;
+        height: calc(100vh - 100px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .umc-chat__panel, .umc-chat__fab, .umc-chat__typing span { animation: none; transition: none; }
+    .umc-chat__messages { scroll-behavior: auto; }
+}
+@media print { .umc-chat { display: none; } }

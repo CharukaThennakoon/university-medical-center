@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Register Patient - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <a href="{{ url_for('counter.dashboard') }}" class="small">&larr; Back to dashboard</a>
+        <div class="card shadow-sm mt-2">
+            <div class="card-body p-4">
+                <h4 class="mb-1">Register a patient manually</h4>
+                <p class="text-muted small mb-4">
+                    For students who cannot self-register. Check the Campus ID before saving.
+                </p>
+                <form method="post" action="{{ url_for('counter.register') }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% with password_required = false,
+                            password_help = 'Leave both boxes empty if the student does not need an online account. If set, the username is the AR number.' %}
+                        {% include "_patient_fields.html" %}
+                    {% endwith %}
+                    <button type="submit" class="btn btn-primary">Save patient</button>
+                    <a href="{{ url_for('counter.dashboard') }}" class="btn btn-link">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

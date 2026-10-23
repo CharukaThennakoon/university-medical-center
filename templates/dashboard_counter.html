@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Counter Officer Dashboard - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h3 class="mb-0">Counter Officer Dashboard</h3>
+        <div class="text-muted small">{{ today.strftime('%A, %d %B %Y') }} &middot; token numbers restart at 1 every day</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="{{ url_for('counter.token') }}">Issue token</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('counter.register') }}">Register patient</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['Pending'] }}</div><div class="small text-muted">Waiting</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['In-Consultation'] }}</div><div class="small text-muted">With doctor</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['Completed'] }}</div><div class="small text-muted">Completed</div></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Today's tokens</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Token</th><th>Patient</th><th>AR number</th><th>Issued</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            {% for t in tokens %}
+                <tr>
+                    <td class="fw-bold">#{{ t.token_number }}</td>
+                    <td>{{ t.patient_name }}</td>
+                    <td>{{ t.ar_number }}</td>
+                    <td>{{ t.issued_at.strftime('%H:%M') }}</td>
+                    <td>{{ status_badge(t.status) }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No tokens issued yet today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Patient History - University Medical Center{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('doctor.dashboard') }}" class="small">&larr; Back to queue</a>
+<h4 class="mt-2">{{ patient.first_name }} {{ patient.last_name }}</h4>
+<p class="text-muted small">AR {{ patient.ar_number }} &middot; NIC {{ patient.nic_number }} &middot;
+    {{ patient.height if patient.height is not none else '-' }} cm /
+    {{ patient.weight if patient.weight is not none else '-' }} kg</p>
+
+{% if patient.special_conditions %}
+<div class="alert alert-danger py-2"><strong>Special conditions:</strong> {{ patient.special_conditions }}</div>
+{% endif %}
+
+<h6 class="mt-3">Medical &amp; prescription history</h6>
+{% include "_history.html" %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - University Medical Center{% endblock %}
+{% block content %}
+<h3 class="mb-0">Administrator</h3>
+<div class="text-muted small mb-3">{{ today.strftime('%A, %d %B %Y') }}</div>
+{% include "_admin_nav.html" %}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ s.patients }}</div><div class="small text-muted">Registered patients</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ s.tokens['Pending'] + s.tokens['In-Consultation'] + s.tokens['Completed'] }}</div>
+        <div class="small text-muted">Tokens today ({{ s.tokens['Pending'] }} waiting)</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ s.rx_pending }}</div><div class="small text-muted">Prescriptions at pharmacy</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ s.doctors.available }} / {{ s.doctors.total }}</div><div class="small text-muted">Doctors available</div></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold d-flex justify-content-between">
+                Medicines needing attention
+                <a href="{{ url_for('admin.medicines', show='attention') }}" class="small">View all</a>
+            </div>
+            <div class="card-body pb-0">
+                <span class="badge bg-danger">{{ s.stock.out_of_stock }} out of stock</span>
+                <span class="badge bg-warning text-dark">{{ s.stock.low }} low (&le; {{ low_stock }})</span>
+                <span class="badge bg-danger">{{ s.stock.expired }} expired</span>
+                <span class="badge bg-warning text-dark">{{ s.stock.expiring }} expiring soon</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 mt-2">
+                    <thead class="table-light"><tr><th>Medicine</th><th>Stock</th><th>Expiry</th><th></th></tr></thead>
+                    <tbody>
+                    {% for m in s.attention %}
+                    <tr>
+                        <td>{{ m.medicine_name }}</td>
+                        <td>{{ m.stock_quantity }}
+                            {% if m.out %}<span class="badge bg-danger">out</span>{% elif m.low %}<span class="badge bg-warning text-dark">low</span>{% endif %}</td>
+                        <td>{{ m.expiry_date or '-' }}
+                            {% if m.expired %}<span class="badge bg-danger">expired</span>{% elif m.expiring %}<span class="badge bg-warning text-dark">soon</span>{% endif %}</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.medicines', q=m.medicine_name) }}">Manage</a></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted py-3">Everything is in good shape.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Accounts by role</div>
+            <ul class="list-group list-group-flush">
+                {% for role in ['Admin','Doctor','Pharmacist','CounterOfficer','Student'] %}
+                {% set r = s.users.get(role) %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ role }}</span>
+                    <span>{{ r.n if r else 0 }}{% if r and r.inactive %} <span class="badge bg-secondary">{{ r.inactive|int }} inactive</span>{% endif %}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

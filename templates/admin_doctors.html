@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Doctors - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Doctors</h3>
+{% include "_admin_nav.html" %}
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold">Add doctor (creates the login too)</div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('admin.create_doctor') }}" class="row g-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-md-3"><input class="form-control" name="doctor_name" placeholder="Dr. Full name" required maxlength="100"></div>
+            <div class="col-md-3"><input class="form-control" name="specialization" placeholder="General Practitioner" maxlength="100"></div>
+            <div class="col-md-2"><input class="form-control" name="username" placeholder="Username" required maxlength="50" autocomplete="off"></div>
+            <div class="col-md-2"><input type="password" class="form-control" name="password" placeholder="Password" required autocomplete="new-password"></div>
+            <div class="col-md-2"><input type="password" class="form-control" name="confirm_password" placeholder="Repeat" required autocomplete="new-password"></div>
+            <div class="col-12"><button class="btn btn-primary">Add doctor</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light"><tr><th>Name</th><th>Specialization</th><th>Login</th><th>Available</th><th></th></tr></thead>
+            <tbody>
+            {% for d in doctors %}
+            <tr>
+                <td>
+                    <form id="doc-{{ d.doctor_id }}" method="post" action="{{ url_for('admin.update_doctor', doctor_id=d.doctor_id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    </form>
+                    <input form="doc-{{ d.doctor_id }}" class="form-control form-control-sm" name="doctor_name" value="{{ d.doctor_name }}" required maxlength="100">
+                </td>
+                <td><input form="doc-{{ d.doctor_id }}" class="form-control form-control-sm" name="specialization" value="{{ d.specialization }}" maxlength="100"></td>
+                <td>{% if d.username %}{{ d.username }} {% if not d.is_active %}<span class="badge bg-secondary">deactivated</span>{% endif %}{% else %}<span class="text-muted">no login</span>{% endif %}</td>
+                <td>
+                    <select form="doc-{{ d.doctor_id }}" class="form-select form-select-sm" name="is_available">
+                        <option value="1" {{ 'selected' if d.is_available }}>Available</option>
+                        <option value="0" {{ 'selected' if not d.is_available }}>Not available</option>
+                    </select>
+                </td>
+                <td class="text-end"><button form="doc-{{ d.doctor_id }}" class="btn btn-sm btn-primary">Save</button></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted small mt-2">To stop a doctor logging in, deactivate the account on the Users page.</p>
+{% endblock %}

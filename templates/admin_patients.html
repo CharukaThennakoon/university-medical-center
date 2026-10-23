@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Patients - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Patients</h3>
+{% include "_admin_nav.html" %}
+<form method="get" class="row g-2 mb-3">
+    <div class="col"><input class="form-control" name="q" value="{{ q }}" placeholder="Search AR number, NIC or name"></div>
+    <div class="col-auto"><button class="btn btn-outline-primary">Search</button></div>
+</form>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>AR number</th><th>Name</th><th>NIC</th><th>Address</th><th></th></tr></thead>
+            <tbody>
+            {% for p in patients %}
+            <tr>
+                <td class="fw-semibold">{{ p.ar_number }}</td>
+                <td>{{ p.first_name }} {{ p.last_name }}</td>
+                <td>{{ p.nic_number }}</td>
+                <td>{{ p.address }}</td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.patient_edit', patient_id=p.patient_id) }}">Edit</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No patients found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted small mt-2">Showing up to 100 results. Medical details and prescriptions are not visible to the Admin.</p>
+{% endblock %}

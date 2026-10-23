@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Pharmacy Dashboard - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h3 class="mb-0">Pharmacy Dashboard</h3>
+        <div class="text-muted small">Prescriptions waiting to be packed, by token number</div>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('pharmacy.stock') }}">View stock levels</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('pharmacy.find') }}" class="row g-2 align-items-center">
+            <div class="col-auto fw-semibold">Find by token</div>
+            <div class="col-sm col-12">
+                <input type="text" name="q" class="form-control" placeholder="Token number, e.g. 3" required>
+            </div>
+            <div class="col-auto"><button class="btn btn-primary">Open</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ pending_today }}</div><div class="small text-muted">Waiting (today)</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold {{ 'text-danger' if pending_older else '' }}">{{ pending_older }}</div>
+        <div class="small text-muted">Waiting from earlier days</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ recent|length }}</div><div class="small text-muted">Dispensed today</div></div></div></div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Pending prescriptions</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Token</th><th>Patient</th><th>AR number</th><th>Doctor</th><th>Medicines</th><th>Prescribed</th><th>Notes</th><th class="text-end">Action</th></tr>
+            </thead>
+            <tbody>
+            {% for q in queue %}
+                <tr>
+                    <td class="fw-bold">
+                        #{{ q.token_number }}
+                        {% if not q.is_today %}<br><span class="badge bg-warning text-dark">{{ q.token_date.strftime('%d %b') }}</span>{% endif %}
+                    </td>
+                    <td>{{ q.patient_name }}</td>
+                    <td>{{ q.ar_number }}</td>
+                    <td class="small">{{ q.doctor_name }}</td>
+                    <td>{{ q.item_count }} item{{ '' if q.item_count == 1 else 's' }}</td>
+                    <td class="small">{{ q.prescribed_at.strftime('%H:%M') }}</td>
+                    <td class="small">{% if q.special_conditions %}<span class="text-danger">{{ q.special_conditions }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                    <td class="text-end"><a class="btn btn-sm btn-primary" href="{{ url_for('pharmacy.prescription', prescription_id=q.prescription_id) }}">Prepare</a></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No prescriptions waiting. All caught up.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Dispensed today</div>
+    <ul class="list-group list-group-flush">
+        {% for r in recent %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><strong>#{{ r.token_number }}</strong> &middot; {{ r.patient_name }} <span class="text-muted small">({{ r.ar_number }})</span></span>
+            <a class="small" href="{{ url_for('pharmacy.prescription', prescription_id=r.prescription_id) }}">View</a>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">Nothing dispensed yet today.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

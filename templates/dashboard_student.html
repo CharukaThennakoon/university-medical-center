@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Student Dashboard - University Medical Center{% endblock %}
+
+{% block content %}
+<h3 class="mb-1">Student Dashboard</h3>
+<p class="text-muted">Welcome, {{ patient.first_name }} &middot; AR number {{ patient.ar_number }}</p>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Today's token</div>
+            <div class="card-body text-center">
+                {% if token %}
+                    <div class="display-3 fw-bold text-primary">#{{ token.token_number }}</div>
+                    <div class="mb-2">{{ status_badge(token.status) }}
+                        <span class="text-muted small ms-1">issued at {{ token.issued_at.strftime('%H:%M') }}</span></div>
+                    {% if token.status == 'Pending' %}
+                        <p class="mb-0">Patients ahead of you: <strong>{{ ahead }}</strong></p>
+                    {% elif token.status == 'In-Consultation' %}
+                        <p class="mb-0">Please go to the doctor now.</p>
+                    {% else %}
+                        <p class="text-muted mb-2">Your consultation is complete.</p>
+                        {% if rx_info and rx_info.n > 0 %}
+                            {% if rx_info.status == 'Pending' %}
+                            <div class="alert alert-info py-2 small mb-0">
+                                Your prescription is being prepared at the pharmacy.
+                                Show token <strong>#{{ token.token_number }}</strong> to collect your medicines.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-success py-2 small mb-0">Your medicines have been dispensed.</div>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted my-4">You do not have a token for today.</p>
+                {% endif %}
+            </div>
+            {% if can_issue %}
+            <div class="card-footer bg-white text-center">
+                <form method="post" action="{{ url_for('patients.issue_my_token') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary">
+                        {{ 'Get a new token' if token else "Get today's token" }}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Doctor availability</div>
+            <ul class="list-group list-group-flush">
+                {% for d in doctors %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ d.doctor_name }}<br><small class="text-muted">{{ d.specialization }}</small></span>
+                    {% if d.is_available %}<span class="badge bg-success">Available</span>
+                    {% else %}<span class="badge bg-secondary">Not available</span>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm"><div class="card-body">
+            <h6>My Medical History</h6>
+            <p class="small text-muted">Past diagnoses and prescribed medicines.</p>
+            <a class="btn btn-outline-primary btn-sm" href="{{ url_for('patients.history') }}">View my history</a>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm"><div class="card-body">
+            <h6>AI Assistant</h6>
+            <p class="small text-muted">Ask the medical-center chatbot for help.</p>
+            <p class="small mb-0">Click the <strong>blue chat button</strong> at the bottom-right of the page.</p>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

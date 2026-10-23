@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reports - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Reports</h3>
+{% include "_admin_nav.html" %}
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm"><div class="card-header bg-white fw-semibold">Visits per day (last 14 days)</div>
+        <div class="card-body">
+            {% for v in visits %}
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="small text-muted" style="width:110px">{{ v.token_date.strftime('%a %d %b') }}</div>
+                <div class="progress flex-grow-1" style="height:18px">
+                    <div class="progress-bar" style="width: {{ (v.total / peak * 100)|round|int }}%">{{ v.total }}</div>
+                </div>
+                <div class="small text-muted" style="width:90px">{{ v.completed|int }} done</div>
+            </div>
+            {% else %}<div class="text-muted">No visits in this period.</div>{% endfor %}
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm mb-3"><div class="card-header bg-white fw-semibold">Most prescribed medicines (30 days)</div>
+        <table class="table table-sm mb-0"><thead class="table-light"><tr><th>Medicine</th><th>Units</th><th>Prescriptions</th></tr></thead><tbody>
+            {% for m in medicines %}<tr><td>{{ m.medicine_name }}</td><td>{{ m.units|int }}</td><td>{{ m.prescriptions }}</td></tr>
+            {% else %}<tr><td colspan="3" class="text-muted text-center py-3">No data.</td></tr>{% endfor %}
+        </tbody></table></div>
+        <div class="card shadow-sm"><div class="card-header bg-white fw-semibold">Doctor workload (30 days)</div>
+        <table class="table table-sm mb-0"><thead class="table-light"><tr><th>Doctor</th><th>Consultations</th></tr></thead><tbody>
+            {% for d in workload %}<tr><td>{{ d.doctor_name }}</td><td>{{ d.consultations }}</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Audit log - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Audit log</h3>
+{% include "_admin_nav.html" %}
+<div class="card shadow-sm"><div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+        <thead class="table-light"><tr><th>When</th><th>Admin</th><th>Action</th><th>Details</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+        <tr><td class="text-nowrap">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ r.username }}</td>
+            <td><span class="badge bg-light text-dark border">{{ r.action }}</span></td><td>{{ r.detail or '' }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-4">Nothing logged yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div></div>
+<p class="text-muted small mt-2">Latest 200 changes. Passwords are never written to the log.</p>
+{% endblock %}

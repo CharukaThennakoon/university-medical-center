@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Dispense Token #{{ rx.token_number }} - University Medical Center{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('pharmacy.dashboard') }}" class="small">&larr; Back to queue</a>
+<div class="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
+    <h4 class="mb-0">Token #{{ rx.token_number }}</h4>
+    {% if rx.status == 'Pending' %}<span class="badge bg-warning text-dark">Waiting to be packed</span>
+    {% else %}<span class="badge bg-success">Dispensed</span>{% endif %}
+    <span class="text-muted small">{{ rx.token_date.strftime('%d %b %Y') }}</span>
+    {% if rx.status == 'Pending' and not rx.is_today %}<span class="badge bg-danger">From an earlier day</span>{% endif %}
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ rx.first_name }} {{ rx.last_name }}</h5>
+                <dl class="row small mb-2">
+                    <dt class="col-5">AR number</dt><dd class="col-7">{{ rx.ar_number }}</dd>
+                    <dt class="col-5">NIC</dt><dd class="col-7">{{ rx.nic_number }}</dd>
+                    <dt class="col-5">Doctor</dt><dd class="col-7">{{ rx.doctor_name }}</dd>
+                    <dt class="col-5">Prescribed</dt><dd class="col-7">{{ rx.prescribed_at.strftime('%d %b %Y, %H:%M') }}</dd>
+                </dl>
+                {% if rx.special_conditions %}
+                <div class="alert alert-danger py-2 mb-2 small">
+                    <strong>Special conditions:</strong> {{ rx.special_conditions }}
+                </div>
+                {% endif %}
+                <div class="small text-muted">Diagnosis</div>
+                <div>{{ rx.diagnosis }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <form method="post" action="{{ url_for('pharmacy.dispense', prescription_id=rx.prescription_id) }}" id="dispenseForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-semibold">
+                    {% if rx.status == 'Pending' %}Packing checklist &ndash; tick each medicine once it is packed{% else %}Medicines{% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                {% if rx.status == 'Pending' %}<th style="width:70px">Packed</th>{% endif %}
+                                <th>Medicine</th><th>Dosage</th><th class="text-center">Give</th><th class="text-end">Remaining stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for line in rx.lines %}
+                            <tr>
+                                {% if rx.status == 'Pending' %}
+                                <td><input class="form-check-input pack-check" type="checkbox" name="packed" value="{{ line.item_id }}"
+                                           style="width:1.4rem;height:1.4rem;" aria-label="Packed: {{ line.medicine_name }}"></td>
+                                {% endif %}
+                                <td>
+                                    <div class="fw-semibold">{{ line.medicine_name }}</div>
+                                    <div class="small text-muted">{{ line.category }}</div>
+                                    {% if line.expired %}<span class="badge bg-danger">Expired &ndash; do not dispense</span>{% endif %}
+                                </td>
+                                <td class="small">{{ line.dosage }}</td>
+                                <td class="text-center fs-5 fw-bold">&times;{{ line.quantity_given }}</td>
+                                <td class="text-end">
+                                    <span class="d-inline-block rounded-circle bg-{{ 'success' if line.stock_indicator == 'GREEN' else 'danger' }}"
+                                          style="width:10px;height:10px;" title="{{ line.stock_indicator }}"></span>
+                                    {{ line.stock_quantity }}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No medicines on this prescription.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if rx.status == 'Pending' %}
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                    <span class="small text-muted" id="packedCounter"></span>
+                    <button type="submit" id="dispenseBtn" class="btn btn-success" disabled>Mark as Dispensed</button>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+        <p class="small text-muted mt-2 mb-0">Stock was already deducted when the doctor prescribed. Dispensing does not change stock again.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if rx.status == 'Pending' %}
+<script>
+(function () {
+    var boxes = document.querySelectorAll('.pack-check');
+    var btn = document.getElementById('dispenseBtn');
+    var counter = document.getElementById('packedCounter');
+
+    function update() {
+        var done = 0;
+        boxes.forEach(function (b) { if (b.checked) done++; });
+        counter.textContent = done + ' of ' + boxes.length + ' packed';
+        btn.disabled = boxes.length === 0 || done !== boxes.length;
+    }
+    boxes.forEach(function (b) { b.addEventListener('change', update); });
+
+    document.getElementById('dispenseForm').addEventListener('submit', function (e) {
+        if (!confirm('Mark Token #{{ rx.token_number }} as dispensed?')) e.preventDefault();
+    });
+    update();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Edit patient - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Edit patient</h3>
+{% include "_admin_nav.html" %}
+<div class="card shadow-sm" style="max-width:640px">
+    <div class="card-body">
+        <div class="mb-3 small text-muted">AR number <strong>{{ patient.ar_number }}</strong> &middot; NIC <strong>{{ patient.nic_number }}</strong> (read-only: the AR number is the student's login)</div>
+        <form method="post" action="{{ url_for('admin.patient_edit', patient_id=patient.patient_id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% for key, label in [('first_name','First name'),('last_name','Last name')] %}
+            <div class="mb-3">
+                <label class="form-label" for="{{ key }}">{{ label }}</label>
+                <input class="form-control {{ 'is-invalid' if errors.get(key) }}" id="{{ key }}" name="{{ key }}" value="{{ form[key] or '' }}" required maxlength="50">
+                {% if errors.get(key) %}<div class="invalid-feedback">{{ errors[key] }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <div class="mb-3">
+                <label class="form-label" for="address">Address</label>
+                <input class="form-control {{ 'is-invalid' if errors.get('address') }}" id="address" name="address" value="{{ form['address'] or '' }}" required maxlength="255">
+                {% if errors.get('address') %}<div class="invalid-feedback">{{ errors['address'] }}</div>{% endif %}
+            </div>
+            <button class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin.patients') }}">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

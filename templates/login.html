@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Login - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="mb-1">Sign in</h4>
+                <p class="text-muted small mb-4">Students log in with their AR number.</p>
+
+                <form method="post" action="{{ url_for('auth.login') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               required autofocus autocomplete="username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                               required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <p class="text-center small mt-3 mb-0">
+            New student? <a href="{{ url_for('patients.register') }}">Register here</a>
+        </p>
+
+        {% if config.DEBUG %}
+        <div class="card mt-3 border-warning">
+            <div class="card-body small">
+                <strong>Demo accounts</strong> (password <code>Password@123</code>)<br>
+                Student: <code>AR1001</code> &middot; Doctor: <code>doctor1</code>, <code>doctor2</code><br>
+                Pharmacist: <code>pharmacist1</code> &middot; Counter: <code>counter1</code><br>
+                Admin: <code>admin1</code><br>
+
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

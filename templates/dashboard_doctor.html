@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Doctor Dashboard - University Medical Center{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h3 class="mb-0">Doctor Dashboard</h3>
+        <div class="text-muted small">Today's patient queue</div>
+    </div>
+
+    {% if me %}
+    <form method="post" action="{{ url_for('doctor.availability') }}" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if me.is_available %}
+            <span class="badge bg-success">You are available</span>
+            <input type="hidden" name="available" value="0">
+            <button class="btn btn-sm btn-outline-secondary">Mark as not available</button>
+        {% else %}
+            <span class="badge bg-secondary">You are NOT available</span>
+            <input type="hidden" name="available" value="1">
+            <button class="btn btn-sm btn-outline-success">Mark as available</button>
+        {% endif %}
+    </form>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('doctor.find') }}" class="row g-2 align-items-center">
+            <div class="col-auto fw-semibold">Find patient</div>
+            <div class="col-auto">
+                <select name="by" class="form-select">
+                    <option value="token">Token No.</option>
+                    <option value="ar">AR No.</option>
+                </select>
+            </div>
+            <div class="col-sm col-12">
+                <input type="text" name="q" class="form-control" placeholder="e.g. 3  or  AR1001" required>
+            </div>
+            <div class="col-auto"><button class="btn btn-primary">Open</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['Pending'] }}</div><div class="small text-muted">Waiting</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['In-Consultation'] }}</div><div class="small text-muted">In consultation</div></div></div></div>
+    <div class="col-4"><div class="card text-center shadow-sm"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">{{ counts['Completed'] }}</div><div class="small text-muted">Completed</div></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Queue</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Token</th><th>Patient</th><th>AR number</th><th>Medical notes</th><th>Status</th><th class="text-end">Action</th></tr>
+            </thead>
+            <tbody>
+            {% for t in queue %}
+                <tr>
+                    <td class="fw-bold">#{{ t.token_number }}</td>
+                    <td>{{ t.patient_name }}</td>
+                    <td>{{ t.ar_number }}</td>
+                    <td class="small">
+                        {% if t.special_conditions %}<span class="text-danger">{{ t.special_conditions }}</span>
+                        {% else %}<span class="text-muted">-</span>{% endif %}
+                    </td>
+                    <td>{{ status_badge(t.status) }}</td>
+                    <td class="text-end">
+                        {% if t.status == 'Pending' %}
+                        <form method="post" action="{{ url_for('doctor.start', token_id=t.token_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-primary">Call patient</button>
+                        </form>
+                        {% elif t.status == 'In-Consultation' %}
+                        <a class="btn btn-sm btn-success" href="{{ url_for('doctor.consult', token_id=t.token_id) }}">Continue</a>
+                        {% else %}
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('doctor.consult', token_id=t.token_id) }}">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No tokens issued yet today.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
